@@ -9,35 +9,35 @@ namespace Src.Pessoa.Controllers
     [ActivatorUtilitiesConstructor]
     public class PessoaController : Controller
     {
-        PessoaHelpers pessoaHelpers = new();
         private readonly SorteioDbContext _context;
-        public PessoaController(SorteioDbContext context)
+        private readonly PessoaHelpers _pessoaHelpers;
+        public PessoaController(SorteioDbContext context, PessoaHelpers pessoaHelpers)
         {
             _context = context;
+            _pessoaHelpers = pessoaHelpers;
+
         }
 
         [HttpPost]
         [Route("v1/cadastrar")]
         public IActionResult GerarNumero(PessoaModel pessoa)
         {
-            if (pessoa == null) return BadRequest("O Campos são Obrigatórios!");
+            if (pessoa == null || string.IsNullOrWhiteSpace(pessoa.Nome) || string.IsNullOrWhiteSpace(pessoa.Email))
+            {
+
+                return BadRequest("Campos Obrigatórios não fornecidos!");
+            }
 
             // Checa se Email enviado existe
-            var existingEmail = _context.Pessoas.Any(p => p.Email == pessoa.Email);
-            if (existingEmail)
+            if (EmailExistente(pessoa.Email))
             {
-                // Se o email existe, verifica se o CPF pertence ao mesmo usuário
-                var existingCpfForEmail = _context.Pessoas.Any(p => p.Email == pessoa.Email && p.Cpf == pessoa.Cpf);
-
-                if (existingCpfForEmail)
+                if (CpfValidoParaEmail(pessoa.Email, pessoa.Cpf))
                 {
-
-                    string numero = pessoaHelpers.GerarNumeroAleatorio(pessoa.Email);
+                    string numero = _pessoaHelpers.GerarNumeroAleatorio(pessoa.Email);
                     SalvarNumeroNoBanco(numero, pessoa);
                     return Ok(new { Usuario = pessoa.Email, Numero = numero });
                 }
 
-                // Usuario não existente para Email e Cpf Fornecido;
                 return BadRequest("CPF inválido para o email fornecido.");
             }
 
@@ -46,9 +46,18 @@ namespace Src.Pessoa.Controllers
             return StatusCode(201, pessoa);
         }
 
+        private bool EmailExistente(string email)
+        {
+            return _context.Pessoas.Any(p => p.Email == email);
+        }
+
+        private bool CpfValidoParaEmail(string email, string cpf)
+        {
+            return _context.Pessoas.Any(p => p.Email == email && p.Cpf == cpf);
+        }
+
         public void SalvarNumeroNoBanco(string numero, PessoaModel pessoa)
         {
-
             try
             {
                 NumeroModel numeroModel = new NumeroModel
@@ -63,12 +72,8 @@ namespace Src.Pessoa.Controllers
             }
             catch (DbUpdateException ex)
             {
-                Console.WriteLine($"Erro ao salvar o número no Banco: {ex}");
-
-
+                // Console.WriteLine($"Erro ao salvar o número no Banco: {ex}");
                 throw new Exception($"Ocorreu um Erro ao salvar o número no Banco: {ex.Message}");
-
-
             }
 
         }
@@ -81,13 +86,13 @@ namespace Src.Pessoa.Controllers
                 _context.Pessoas.Add(pessoa);
                 _context.SaveChanges();
 
-                string numero = pessoaHelpers.GerarNumeroAleatorio(pessoa.Email);
+                string numero = _pessoaHelpers.GerarNumeroAleatorio(pessoa.Email);
                 SalvarNumeroNoBanco(numero, pessoa);
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro ao salvar usuário no Banco: {ex.Message}");
+                // Console.WriteLine($"Erro ao salvar usuário no Banco: {ex.Message}");
                 throw new Exception($"Ocorreu um Erro ao salvar o Usuário no Banco: {ex.Message}");
             }
 
