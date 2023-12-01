@@ -6,8 +6,8 @@ This is a API on C# using asp.net core. The mainly goal is generate random numbe
 
 <h5>. git clone https://github.com/IsaacNascimento/sorteioApi
 
-<h5>. donet --version: 8.0.100
-<h5>. donet restore
+<h5>. dotnet --version: 8.0.100
+<h5>. dotnet restore
 
 <hr>
 <h3> Run Migrations: </h3> 
