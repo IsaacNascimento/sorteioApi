@@ -20,7 +20,7 @@ namespace Src.Pessoa.Controllers
 
         [HttpPost]
         [Route("v1/cadastrar")]
-        public IActionResult GerarNumero(PessoaModel pessoa)
+        public IActionResult GerarNumero([FromBody] PessoaModel pessoa)
         {
             if (pessoa == null || string.IsNullOrWhiteSpace(pessoa.Nome) || string.IsNullOrWhiteSpace(pessoa.Email))
             {
